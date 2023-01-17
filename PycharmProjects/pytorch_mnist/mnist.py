@@ -11,6 +11,11 @@
 특성맵을 펼친다. # batch_size × 7 × 7 × 64 → batch_size × 3136
 전결합층(뉴런 10개) + 활성화 함수 Softmax
 '''
+
+
+
+
+
 # --- 1. 필요한 도구 임포트와 입력의 정의 ---
 import torch
 import torch.nn as nn
@@ -19,16 +24,33 @@ import torch.nn as nn
 # 배치 크기 × 채널 × 높이(height) × 너비(widht)의 크기의 텐서를 선언
 inputs = torch.Tensor(1, 1, 28, 28)
 print('텐서의 크기 : {}'.format(inputs.shape)) # 텐서의 크기 : torch.Size([1, 1, 28, 28])
+# print(inputs)
+print('>>>>>>>>>>><<<<<<<<<<<<<<<<<<')
 
 # --- 2. 합성곱층과 풀링 선언하기 ---
 # 첫번째 합성곱 층 구현. 1채널 짜리를 입력받아서 32채널을 뽑아내는데 커널 사이즈 3이고 패딩 1입니다.
 
 conv1 = nn.Conv2d(1, 32, 3, padding=1)
 print(conv1) # Conv2d(1, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+print(conv1.weight)
+print(conv1.weight.shape) # torch.Size([32, 1, 3, 3]) ---> weight가 가지는 shape : batch_size, channels, height, width의 크기
 
-# 두번째 합성곱 층 구현. 32채널 짜리를 입력받아서 64채널을 뽑아내는데, 커널 사이즈 3이고 패딩 1입니다.
+# show weight
+weight = conv1.weight.detach().numpy()
+import matplotlib.pyplot as plt
+# plt.imshow(weight[0, 0, :, :], 'jet')
+# plt.colorbar()
+# plt.show()
+
+# 두번째 합성곱 층 구현. 32채널 짜리를 입력받아서 64채널을 뽑아내는데, 커널 사이즈 3 패딩 1.
 conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
 print(conv2) # Conv2d(32, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+print(conv2.weight.shape) # torch.Size([32, 1, 3, 3]) ---> weight가 가지는 shape : batch_size, channels, height, width의 크기
+
+# weight2 = conv2.weight.detach().numpy()
+# plt.imshow(weight2[0, 0, :, :], 'jet')
+# plt.colorbar()
+# plt.show()
 
 # 맥스풀링 구현. 정수 하나를 인자로 넣으면 커널 사이즈와 스트라이드가 둘 다 해당값으로 지정.
 pool = nn.MaxPool2d(2)
@@ -100,14 +122,23 @@ import torchvision.datasets as dsets
 import torchvision.transforms as transforms
 import torch.nn.init
 
-
+'''
+torch.cuda.is_available()
+# cuda가 사용 가능하면 true를 반환함으로서 device에 cuda를 설정하도록 한다
 # gpu 사용이 가능한지?
+
+device에 cuda (GPU)를 설정하고,
+device와 current_device()를 출력해봄으로 GPU가 잘 할당되었는지 확인가능
+'''
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
-
-
-# 랜덤 시드 고정
+'''
+manual_seed()
+# 랜덤 시드 고정 = 동일한 셋트의 난수를 생성할 수 있게 하는 것
+# 반환값으로는 generator를 반환
+# 괄호 안에 들어가는 숫자 자체는 중요하지 않고 서로 다른 시드를 사용하면 서로 다른 난수를 생성한다
+'''
 torch.manual_seed(777)
 
 # gpu 사용 설정 후, random_value를 위한 seed 설정
@@ -119,11 +150,21 @@ if device == 'cuda':
 
 # 학습에 사용할 파라미터를 설정
 learning_rate = 0.001
-training_epochs = 15
+training_epochs = 1
 batch_size = 100
 
 # 데이터로더를 사용하여 데이터를 다루기 위해서 데이터셋을 정의
 # MNIST dataset
+'''
+torchvision.datasets 모듈의 MNIST객체로 MNIST 데이터를 불러와서 데이터 셋 객체를 만든다.
+
+root : 데이터의 경로
+transform : 어떤 형태로 데이터를 불러올 것인가
+transform : 일반 이미지는 0-255사이의 값을 갖고, (H, W, C)의 형태를 갖는 반면 
+            pytorch는 0-1사이의 값을 가지고 (C, H, W)의 형태를 갖는다. 
+            transform에 transforms.ToTensor()를 넣어서 일반 이미지(PIL image)를 pytorch tensor로 변환
+
+'''
 mnist_train = dsets.MNIST(root='MNIST_data/', # 다운로드 경로 지정
                           train=True, # True를 지정하면 훈련 데이터로 다운로드
                           transform=transforms.ToTensor(), # 텐서로 변환
@@ -133,7 +174,15 @@ mnist_test = dsets.MNIST(root='MNIST_data/', # 다운로드 경로 지정
                          train=False, # False를 지정하면 테스트 데이터로 다운로드
                          transform=transforms.ToTensor(), # 텐서로 변환
                          download=True)
+'''
+위에서 불러온 데이터셋 객체로 이제 data_loader 객체를 만든다. 
 
+dataset : 어떤 데이터를 로드할 것인지
+batch_size : 배치 사이즈를 뭘로 할지
+shuffle : 순서를 무작위로 할 것인지, 있는 순서대로 할 것인지
+drop_last : batch_size로 자를 때 맨 마지막에 남는 데이터를 사용할 것인가 버릴 것인가
+
+'''
 # 데이터로더를 사용하여 배치 크기를 지정 batch_size와 dataset을 통해 dataLoder 로딩
 # 미니 배치와 데이터 로드 보기 --> https://wikidocs.net/55580
 data_loader = torch.utils.data.DataLoader(dataset=mnist_train,
@@ -141,11 +190,15 @@ data_loader = torch.utils.data.DataLoader(dataset=mnist_train,
                                           shuffle=True,
                                           drop_last=True)
 
-# 클래스로 모델을 설계
-class CNN(torch.nn.Module):
 
-    def __init__(self):
-        super(CNN, self).__init__()
+# 클래스로 모델을 설계
+class CNN(torch.nn.Module):                     #---------------------##
+
+    def __init__(self):                         #---------------------##
+        super(CNN, self).__init__()             #---------------------##
+
+        # nn.Sequential은 순서를 갖는 모듈의 컨테이너. 데이터는 정의된 것과 같은 순서로 모든 모듈들을 통해 전달
+
         # 첫번째층
         # ImgIn shape=(?, 28, 28, 1)
         #    Conv     -> (?, 28, 28, 32)
@@ -164,6 +217,12 @@ class CNN(torch.nn.Module):
             torch.nn.ReLU(),
             torch.nn.MaxPool2d(kernel_size=2, stride=2))
 
+
+        '''
+        torch.nn.Linear(in_features,out_features,bias = True, device = None,dtype = None)
+
+        bias는 만일 False로 설정되어 있으면 layer는 bias를 학습하지 않는다
+        '''
         # Final FC (전결합층) 7x7x64 inputs -> 10 outputs
         self.fc = torch.nn.Linear(7 * 7 * 64, 10, bias=True)
 
@@ -180,11 +239,14 @@ class CNN(torch.nn.Module):
 # 모델을 정의
 # CNN 모델 정의
 
-# GPU 사용이 가능한가?
+# GPU에 ``CNN()``의 복사본이 반환
 model = CNN().to(device)
 
 # 비용 함수와 옵티마이저를 정의
 criterion = torch.nn.CrossEntropyLoss().to(device)    # 비용 함수에 소프트맥스 함수 포함되어져 있음.
+'''
+Adam은 가장 흔하게 이용되는 옵티마이저로 Momentum에 적용된 그래디언트 조정법과 Adagrad에 적용된 학습률 조정법의 장점을 융합한 옵티마이저
+'''
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 # 총 배치의 수를 출력
@@ -192,53 +254,109 @@ total_batch = len(data_loader)
 print('총 배치의 수 : {}'.format(total_batch)) # 총 배치의 수 : 600
                                             # 배치 크기를 100으로 했으므로 결국 훈련 데이터는 총 60,000개
 
+'''
+학습을 돌린다.
+for문이 한번 돌때마다 batch_size만큼의 데이터를 꺼내서 학습시키는 것
+for문이 한번 돌면 1 epoch만큼 학습시킨 것
+
+'''
 # 모델을 훈련
 for epoch in range(training_epochs):
     avg_cost = 0
-
-    for X, Y in data_loader: # 미니 배치 단위로 꺼내온다. X는 미니 배치(=image), Y는 레이블.
+    count = 0
+    for X, Y in data_loader: # mnist_train 미니 배치 단위로 꺼내온다. X는 미니 배치(=image), Y는 레이블.
         # image is already size of (28x28), no reshape
         # label is not one-hot encoded
         X = X.to(device)
         Y = Y.to(device)
 
-        optimizer.zero_grad()
-        hypothesis = model(X)
-        cost = criterion(hypothesis, Y)
+        optimizer.zero_grad()   # 파이토치에는 미분값 누적하는 특징. 따라서 미분을 통해 얻은 기울기를 0으로 초기화
+        hypothesis = model(X)  # hypothesis = 모델이자 가설
+        cost = criterion(hypothesis, Y)       # loss = criterion(outputs, labels)
         cost.backward()
         optimizer.step()
 
+
+        print('-------------------------- {} ----------------------'.format(count))
+        print('cost: {}'.format(cost))
+        print('total_batch: {}'.format(total_batch))
+        print('avg_cost: {}'.format(avg_cost))
+
         avg_cost += cost / total_batch
+        count = count + 1
 
     print('[Epoch: {:>4}] cost = {:>.9}'.format(epoch + 1, avg_cost))
 
     '''
-[Epoch:    1] cost = 0.223893151
-[Epoch:    2] cost = 0.0621390603
-[Epoch:    3] cost = 0.0450111665
-[Epoch:    4] cost = 0.0355613008
-[Epoch:    5] cost = 0.0290638003
-[Epoch:    6] cost = 0.0249994267
-[Epoch:    7] cost = 0.0206681583
-[Epoch:    8] cost = 0.0180210788
-[Epoch:    9] cost = 0.015301072
-[Epoch:   10] cost = 0.0126666417
-[Epoch:   11] cost = 0.0107044494
-[Epoch:   12] cost = 0.0101312753
-[Epoch:   13] cost = 0.00786222517
-[Epoch:   14] cost = 0.00772933941
-[Epoch:   15] cost = 0.00640067318
+    [Epoch:    1] cost = 0.223893151
+    [Epoch:    2] cost = 0.0621390603
+    [Epoch:    3] cost = 0.0450111665
+    [Epoch:    4] cost = 0.0355613008
+    [Epoch:    5] cost = 0.0290638003
+    [Epoch:    6] cost = 0.0249994267
+    [Epoch:    7] cost = 0.0206681583
+    [Epoch:    8] cost = 0.0180210788
+    [Epoch:    9] cost = 0.015301072
+    [Epoch:   10] cost = 0.0126666417
+    [Epoch:   11] cost = 0.0107044494
+    [Epoch:   12] cost = 0.0101312753
+    [Epoch:   13] cost = 0.00786222517
+    [Epoch:   14] cost = 0.00772933941
+    [Epoch:   15] cost = 0.00640067318
     '''
 
 print('===================테스트========================')
+# torch.save(model, '/home/cona/mnist/PycharmProjects/pytorch_mnist/model_result/mnist.pth')
+import random
 
+model_load = torch.load('/home/cona/mnist/PycharmProjects/pytorch_mnist/model_result/mnist.pth')
 # 테스트
-# 학습을 진행하지 않을 것이므로 torch.no_grad()
+# 학습을 진행하지 않을 것이므로 torch.no_grad() = 이 범위 안에서느 gradient 계산을 안하겠다는 의미
 with torch.no_grad():
+    '''
+    뷰(View) - 원소의 수를 유지하면서 텐서의 크기 변경
+    '''
     X_test = mnist_test.test_data.view(len(mnist_test), 1, 28, 28).float().to(device)
     Y_test = mnist_test.test_labels.to(device)
 
-    prediction = model(X_test)
+    prediction = model_load(X_test)
+    '''
+    torch.argmax = input tensor에 있는 모든 element들 중에서 가장 큰 값을 가지는 공간의 인덱스 번호를 반환하는 함수
+    '''
+    # 예측된 결과와 실제 test label 간의 맞는 정도
     correct_prediction = torch.argmax(prediction, 1) == Y_test
     accuracy = correct_prediction.float().mean()
     print('Accuracy:', accuracy.item()) # Accuracy: 0.9883000254631042
+    print('Prediction.shape:', prediction.shape)  # Prediction.shape: torch.Size([10000, 10])
+
+    print('Prediction:', prediction)  # Prediction: torch.Size([10000, 10])
+
+    '''
+    랜덤으로 이미지를 하나 골라서 테스트하고, 그 이미지를 pyplot으로 시각화
+    
+    '''
+
+    # # Get one and predict
+    # r = random.randint(0, len(mnist_test) - 1)
+    # X_single_data = mnist_test.test_data[r:r + 1].view(-1, 28 * 28).float().to(device)
+    # Y_single_data = mnist_test.test_labels[r:r + 1].to(device)
+    #
+    # print('Label: ', Y_single_data.item())
+    # single_prediction = model(X_single_data)
+    # print('Prediction: ', torch.argmax(single_prediction, 1).item())
+    #
+    # plt.imshow(mnist_test.test_data[r:r + 1].view(28, 28), cmap='Greys', interpolation='nearest')
+    # plt.show()
+
+    # r = random.randint(0, len(mnist_test) - 1)
+    # X_single_data = mnist_test.test_data[r:r + 1].view(-1, 28 * 28).float().to(device)
+    # Y_single_data = mnist_test.test_labels[r:r + 1].to(device)
+    #
+    # print('Label: ', Y_single_data.item())
+    # single_prediction = linear(X_single_data)
+    # print('Prediction: ', torch.argmax(single_prediction, 1).item())
+    #
+    # plt.imshow(mnist_test.test_data[r:r + 1].view(28, 28), cmap='Greys', interpolation='nearest')
+    # plt.show()
+
+
