@@ -178,6 +178,7 @@ mnist_test = dsets.MNIST(root='MNIST_data/', # 다운로드 경로 지정
                          transform=transforms.ToTensor(), # 텐서로 변환
                          download=True)
 
+print(mnist_test[0]) # 0-1 data
 '''
 위에서 불러온 데이터셋 객체로 이제 data_loader 객체를 만든다. 
 
@@ -415,6 +416,7 @@ trans = transforms.Compose([transforms.Grayscale(),
                             transforms.Resize((28,28)),
                             transforms.ToTensor(),
                             transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5)) # Norm X -> Accuracy: 0.20000000298023224 / Norm O -> Accuracy: 0.25
+                                                                            # -1 ~ 1 사이의 범위를 가지도록 정규화
                             ])
 
 from torchvision.datasets import ImageFolder
