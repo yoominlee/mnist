@@ -422,13 +422,13 @@ myset_imgfolder = ImageFolder(root = "/home/cona/mnist/PycharmProjects/pytorch_m
                               transform = trans)
 print('len(myset) : ',len(myset_imgfolder)) # len(myset) :  20
 classes = myset_imgfolder.classes
-print('myset.classes : ',classes)
+# print('myset.classes : ',classes) # myset.classes :  ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 
 myset_loder = torch.utils.data.DataLoader(dataset=myset_imgfolder,batch_size=20,
                                           shuffle=False, num_workers=2)
 
-print('myset_imgfolder[0][0].size() : ',myset_imgfolder[0][0].size())
+# print('myset_imgfolder[0][0].size() : ',myset_imgfolder[0][0].size()) # myset_imgfolder[0][0].size() :  torch.Size([1, 28, 28])
 
 data_iter = iter(myset_loder)
 images, labels = data_iter.next()
@@ -477,8 +477,8 @@ my_accuracy = correct_prediction.float().mean()
 # print(correct_prediction.float())               # tensor([1., 0., 0., 1., 0., 0., 0., 0., 0., 0., 1., 1., 0., 0., 0., 0., 1., 0., 0., 0.], device='cuda:0')
 print('My Accuracy:', my_accuracy.item()) # Accuracy: 0.25
 
-print(torch.argmax(outputs, 1)) # tensor([0, 6, 8, 1, 0, 1, 8, 8, 8, 5, 5, 5, 3, 3, 8, 8, 8, 5, 8, 5], device='cuda:0')
-print(labels) # tensor([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9], device='cuda:0')
+# print(torch.argmax(outputs, 1)) # tensor([0, 6, 8, 1, 0, 1, 8, 8, 8, 5, 5, 5, 3, 3, 8, 8, 8, 5, 8, 5], device='cuda:0')
+# print(labels) # tensor([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9], device='cuda:0')
 
 # for a in range(20):
 #     print('[labels: {:>4}] correct_prediction = {:>.9}'.format(labels[a], correct_prediction[a]))
@@ -507,7 +507,7 @@ cols = 5
 i = 1
 images = images.to("cpu")
 from PIL import Image
-print(images.size())
+print(images.size()) # torch.Size([20, 1, 28, 28])
 # np_arr = np.array(images, dtype=np.uint8)
 # images = PIL.Image.fromarray(np_arr)
 #
