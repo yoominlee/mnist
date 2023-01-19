@@ -439,10 +439,10 @@ def imageshow(img):
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
-# imageshow(torchvision.utils.make_grid(images))        ######## 여러이미지 imshow !!!!!!!!!!!!!!!!!!!!
+imageshow(torchvision.utils.make_grid(images))        ######## 여러이미지 imshow !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-print('labels : ',labels) # labels :  tensor([4]) -----> ???????????????????????????????????
+print('labels : ',labels) # shuffle X -> labels :  tensor([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9])
 print('>>>',labels[0].item())
 print('>>>',labels[1].item())
 print('>>>',labels[2].item())
@@ -472,11 +472,13 @@ outputs = model_load2(images)
 
 # 예측된 결과와 실제 test label 간의 맞는 정도
 correct_prediction = torch.argmax(outputs, 1) == labels
-accuracy = correct_prediction.float().mean()
-print('Accuracy:', accuracy.item()) # Accuracy: 0.9883000254631042
+# print(torch.argmax(outputs, 1) == labels)       # tensor([ True, False, False,  True, False, False, False, False, False, False, True,  True, False, False, False, False,  True, False, False, False], device='cuda:0')
+my_accuracy = correct_prediction.float().mean()
+# print(correct_prediction.float())               # tensor([1., 0., 0., 1., 0., 0., 0., 0., 0., 0., 1., 1., 0., 0., 0., 0., 1., 0., 0., 0.], device='cuda:0')
+print('My Accuracy:', my_accuracy.item()) # Accuracy: 0.25
 
-print(torch.argmax(outputs, 1))
-print(labels)
+print(torch.argmax(outputs, 1)) # tensor([0, 6, 8, 1, 0, 1, 8, 8, 8, 5, 5, 5, 3, 3, 8, 8, 8, 5, 8, 5], device='cuda:0')
+print(labels) # tensor([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9], device='cuda:0')
 
 # for a in range(20):
 #     print('[labels: {:>4}] correct_prediction = {:>.9}'.format(labels[a], correct_prediction[a]))
